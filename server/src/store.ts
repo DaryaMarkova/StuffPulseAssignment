@@ -1,49 +1,55 @@
-import { buildChildrenIndex, recomputeAncestors } from './aggregates.js'
-import { createSeedNodes } from './data/seed.js'
-import type { OrgNode } from './types.js'
+import { ERROR_MESSAGES } from '@/constants/messages.js';
+import { createSeedNodes } from '@/data/index.js';
+import { aggregatesService } from '@/services/aggregate.service.js';
+import type { LeafPatch, Node } from '@/types/index.js';
 
-type LeafPatch = Partial<
-  Pick<OrgNode, 'headcount' | 'budget' | 'performance' | 'name'>
->
 
+/** In-memory хранилище орг-дерева: чтение узлов и патчи листьев с пересчётом предков. */
 class NodeStore {
-  private byId: Map<string, OrgNode>
-  private children: Map<string | null, string[]>
+  private byId: Map<string, Node>;
+  private children: Map<string | null, string[]>;
 
-  constructor(nodes: OrgNode[]) {
-    this.byId = new Map(nodes.map((node) => [node.id, node]))
-    this.children = buildChildrenIndex(nodes)
+  /** Инициализирует store из списка узлов и строит индекс детей. */
+  constructor(nodes: Node[]) {
+    this.byId = new Map(nodes.map((node) => [node.id, node]));
+    this.children = aggregatesService.buildChildrenIndex(nodes);
   }
 
-  getAll(): OrgNode[] {
-    return [...this.byId.values()]
+  /** Возвращает все узлы плоским списком. */
+  getAll(): Node[] {
+    return [...this.byId.values()];
   }
 
-  getById(id: string): OrgNode | undefined {
-    return this.byId.get(id)
+  /** Возвращает узел по id или undefined, если не найден. */
+  getById(id: string): Node | undefined {
+    return this.byId.get(id);
   }
 
+  /** Возвращает id листьев (узлы без детей). */
   getLeafIds(): string[] {
     return this.getAll()
-      .filter((node) => !(this.children.get(node.id)?.length))
-      .map((node) => node.id)
+      .filter((node) => !this.children.get(node.id)?.length)
+      .map((node) => node.id);
   }
 
   /**
-   * Apply a leaf metric patch and recompute only the node + ancestors.
+   * Применяет патч метрик к листу и пересчитывает только узел и его предков.
+   * @returns изменённые узлы (лист + предки)
    */
-  applyLeafPatch(id: string, patch: LeafPatch): OrgNode[] {
-    const node = this.byId.get(id)
+  applyLeafPatch(id: string, patch: LeafPatch): Node[] {
+    const node = this.byId.get(id);
+
     if (!node) {
-      throw new Error(`Node not found: ${id}`)
+      throw new Error(ERROR_MESSAGES.nodeNotFoundWithId(id));
     }
 
-    const childIds = this.children.get(id) ?? []
+    const childIds = this.children.get(id) ?? [];
+
     if (childIds.length > 0) {
-      throw new Error(`Only leaf nodes can be patched directly: ${id}`)
+      throw new Error(ERROR_MESSAGES.onlyLeafPatch(id));
     }
 
-    const next: OrgNode = {
+    const next: Node = {
       ...node,
       ...patch,
       performance:
@@ -51,11 +57,12 @@ class NodeStore {
           ? node.performance
           : Math.max(0, Math.min(100, patch.performance)),
       updatedAt: new Date().toISOString(),
-    }
-    this.byId.set(id, next)
+    };
+    
+    this.byId.set(id, next);
 
-    return recomputeAncestors(this.byId, this.children, id)
+    return aggregatesService.recomputeAncestors(this.byId, this.children, id);
   }
 }
 
-export const store = new NodeStore(createSeedNodes())
+export const store = new NodeStore(createSeedNodes());
