@@ -5,14 +5,27 @@ import type { Node, SeedLeaf } from '@/types/index.js';
 
 
 /**
- * Company tree: root → divisions → departments → teams (4 levels, 45 nodes).
- * Leaf metrics are set explicitly; ancestor aggregates are recomputed after seed.
+ * Seed-дерево компании: root → divisions → departments → teams (4 уровня, 45 узлов).
+ * Метрики листьев задаются явно; агрегаты предков пересчитываются после сборки.
  */
 export class Three {
+  /**
+   * Возвращает текущую метку времени в ISO.
+   *
+   * @returns {string} ISO-строка даты
+   */
   private now(): string {
     return new Date().toISOString();
   }
 
+  /**
+   * Создаёт групповой узел с нулевыми метриками.
+   *
+   * @param {string} id - идентификатор узла
+   * @param {string} name - отображаемое имя
+   * @param {string | null} parentId - id родителя или null для корня
+   * @returns {Node} групповой узел
+   */
   private group(id: string, name: string, parentId: string | null): Node {
     return {
       id,
@@ -25,6 +38,12 @@ export class Three {
     };
   }
 
+  /**
+   * Создаёт листовой узел из seed-данных.
+   *
+   * @param {SeedLeaf} data - метрики и идентификаторы листа
+   * @returns {Node} листовой узел
+   */
   private leaf(data: SeedLeaf): Node {
     return {
       ...data,
@@ -32,6 +51,11 @@ export class Three {
     };
   }
 
+  /**
+   * Собирает seed-дерево и пересчитывает агрегаты предков.
+   *
+   * @returns {Node[]} плоский список узлов (≥ 40)
+   */
   initNodes(): Node[] {
     const nodes: Node[] = [
       this.group('root', 'StuffPulse Corp', null),
@@ -296,6 +320,11 @@ export class Three {
   }
 }
 
+/**
+ * Создаёт начальный набор узлов орг-дерева.
+ *
+ * @returns {Node[]} плоский список seed-узлов
+ */
 export function createSeedNodes(): Node[] {
   return new Three().initNodes();
 }

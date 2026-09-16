@@ -3,13 +3,20 @@ import { SSE } from '@/constants/messages.js';
 import { store } from '@/store.js';
 import type { Node, PatchEvent, SseClient } from '@/types/index.js';
 
-
-/** SSE-подписки, broadcast патчей и фоновые мутации листьев. */
+/**
+ * SSE-подписки, broadcast патчей и фоновые мутации листьев.
+ */
 export class RealtimeService {
   private clients = new Map<number, SseClient>();
   private nextClientId = 1;
   private mutationTimer: ReturnType<typeof setInterval> | null = null;
 
+  /**
+   * Регистрирует SSE-клиента.
+   *
+   * @param {Response} res - Express-ответ потока SSE
+   * @returns {number} идентификатор клиента
+   */
   addClient(res: Response): number {
     const id = this.nextClientId++;
 
@@ -18,10 +25,22 @@ export class RealtimeService {
     return id;
   }
 
+  /**
+   * Удаляет SSE-клиента по id.
+   *
+   * @param {number} id - идентификатор клиента
+   * @returns {void}
+   */
   removeClient(id: number): void {
     this.clients.delete(id);
   }
 
+  /**
+   * Рассылает патч всем подключённым клиентам.
+   *
+   * @param {Node[]} nodes - изменённые узлы
+   * @returns {void}
+   */
   broadcastPatch(nodes: Node[]): void {
     if (nodes.length === 0 || this.clients.size === 0) {
       return;
@@ -35,6 +54,12 @@ export class RealtimeService {
     }
   }
 
+  /**
+   * Запускает периодические мутации случайных листьев.
+   *
+   * @param {number} [intervalMs=4000] - интервал между мутациями в мс
+   * @returns {void}
+   */
   startMutations(intervalMs = 4_000): void {
     if (this.mutationTimer) {
       return;
@@ -44,6 +69,11 @@ export class RealtimeService {
     this.mutationTimer.unref?.();
   }
 
+  /**
+   * Останавливает периодические мутации.
+   *
+   * @returns {void}
+   */
   stopMutations(): void {
     if (!this.mutationTimer) {
       return;
@@ -53,6 +83,11 @@ export class RealtimeService {
     this.mutationTimer = null;
   }
 
+  /**
+   * Мутирует случайный лист и рассылает патч.
+   *
+   * @returns {void}
+   */
   private mutateRandomLeaf(): void {
     const leafIds = store.getLeafIds();
     if (leafIds.length === 0) {
@@ -60,9 +95,9 @@ export class RealtimeService {
     }
 
     const id = leafIds[Math.floor(Math.random() * leafIds.length)]!;
-    
+
     const node = store.getById(id);
-    
+
     if (!node) {
       return;
     }
