@@ -57,7 +57,7 @@ export function NodeRow({
     getDepthClass('app-data-table__name-cell', depth),
   ].join(' ');
   const className = [
-    selected ? 'is-selected mdl-color--deep-orange-50' : '',
+    selected ? 'is-selected mdl-color--yellow-50' : '',
     highlighted ? 'pulse-flash' : '',
   ]
     .filter(Boolean)

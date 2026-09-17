@@ -70,13 +70,22 @@ class NodeStore {
       throw new Error(ERROR_MESSAGES.onlyLeafPatch(id));
     }
 
+    const ownHeadcount = patch.headcount ?? node.ownHeadcount;
+    const ownBudget = patch.budget ?? node.ownBudget;
+    const ownPerformance =
+      patch.performance === undefined
+        ? node.ownPerformance
+        : Math.max(0, Math.min(100, patch.performance));
+
     const next: Node = {
       ...node,
       ...patch,
-      performance:
-        patch.performance === undefined
-          ? node.performance
-          : Math.max(0, Math.min(100, patch.performance)),
+      ownHeadcount,
+      ownBudget,
+      ownPerformance,
+      headcount: ownHeadcount,
+      budget: ownBudget,
+      performance: ownPerformance,
       updatedAt: new Date().toISOString(),
     };
 

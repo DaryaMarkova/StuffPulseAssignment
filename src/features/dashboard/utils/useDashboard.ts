@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   getAggregatedNodes,
   nodesService,
@@ -19,6 +19,8 @@ import { eventsService } from '../api/events.service';
 
 /**
  * Применяет SSE-патч к кэшированному ответу `/api/nodes`.
+ * Сервер уже присылает пересчитанные агрегаты для листа и предков —
+ * полная клиентская агрегация здесь не запускается.
  *
  * @param {NodesResponse} current - текущие данные в кэше
  * @param {PatchEvent} patch - событие с обновлёнными узлами
@@ -35,7 +37,8 @@ function applyPatch(current: NodesResponse, patch: PatchEvent): NodesResponse {
 }
 
 /**
- * Загружает узлы, держит SSE-патчи в кэше и отслеживает статус + flash ids.
+ * Загружает узлы (агрегация один раз в `queryFn`), держит SSE-патчи в кэше
+ * и отслеживает статус + flash ids.
  *
  * @returns {{
  *   nodes: Node[],
@@ -51,7 +54,11 @@ export function useDashboard() {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: NODES_QUERY_KEY,
-    queryFn: () => nodesService.getAll(),
+    queryFn: async (): Promise<NodesResponse> => {
+      const data = await nodesService.getAll();
+
+      return { nodes: getAggregatedNodes(data.nodes) };
+    },
     staleTime: NODES_STALE_TIME_MS,
   });
 
@@ -74,19 +81,21 @@ export function useDashboard() {
         });
 
         const ids = patch.nodes.map((node: Node) => node.id);
-        
+
         setFlashIds((prev) => {
           const next = new Set(prev);
+
           for (const id of ids) {
             next.add(id);
           }
+
           return next;
         });
 
         window.setTimeout(() => {
           setFlashIds((prev) => {
             const next = new Set(prev);
-            
+
             for (const id of ids) {
               next.delete(id);
             }
@@ -102,14 +111,8 @@ export function useDashboard() {
     };
   }, [queryClient]);
 
-  const loadedNodes = query.data?.nodes;
-  const nodes = useMemo(
-    () => (loadedNodes ? getAggregatedNodes(loadedNodes) : []),
-    [loadedNodes],
-  );
-
   return {
-    nodes,
+    nodes: query.data?.nodes ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

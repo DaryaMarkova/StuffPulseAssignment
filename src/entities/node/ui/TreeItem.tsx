@@ -36,7 +36,7 @@ export function TreeItem({
     'mdl-list__item',
     'app-tree-item',
     getDepthClass('app-tree-item', depth),
-    selected ? 'is-selected mdl-color--deep-orange-50' : '',
+    selected ? 'is-selected mdl-color--yellow-50' : '',
     highlighted ? 'pulse-flash' : '',
   ]
     .filter(Boolean)

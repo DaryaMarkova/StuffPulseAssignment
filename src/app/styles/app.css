@@ -1,11 +1,11 @@
-/* App layout helpers on top of material-design-lite red-orange */
+/* App layout helpers on top of material-design-lite grey-yellow (Hirify-like) */
 
 :root {
-  --accent-primary: #f44336;
-  --accent-primary-soft: rgba(244, 67, 54, 0.28);
-  --accent-secondary: #ff9800;
-  --accent-secondary-soft: rgba(255, 152, 0, 0.28);
-  --accent-secondary-focus: rgba(255, 152, 0, 0.45);
+  --accent-primary: #616161;
+  --accent-primary-soft: rgba(97, 97, 97, 0.22);
+  --accent-secondary: #fbc02d;
+  --accent-secondary-soft: rgba(251, 192, 45, 0.32);
+  --accent-secondary-focus: rgba(251, 192, 45, 0.55);
 }
 
 html,
@@ -30,6 +30,17 @@ body,
   position: relative;
   flex-shrink: 0;
   z-index: 3;
+  background: hsl(220 13% 91%);
+  color: #2f343a;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 1px 2px rgba(47, 52, 58, 0.08);
+}
+
+.app-shell > .mdl-layout__header .mdl-layout__header-row,
+.app-shell > .mdl-layout__header .mdl-layout__title,
+.app-shell > .mdl-layout__header .material-icons,
+.app-shell > .mdl-layout__header .app-header-brand__eyebrow {
+  color: #2f343a;
 }
 
 .app-shell__content {
@@ -44,11 +55,11 @@ body,
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: stretch;
   gap: 12px;
-  padding: 12px 20px 16px;
-  background: #fafafa;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 12px 20px 0;
+  background: transparent;
+  border-bottom: none;
 }
 
 .app-shell__filter-empty {
@@ -56,29 +67,45 @@ body,
 }
 
 .app-filter {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: min(360px, 100%);
-}
-
-.app-filter__icon {
-  flex-shrink: 0;
-  color: rgba(0, 0, 0, 0.54);
-  font-size: 22px;
-  line-height: 1;
-  margin-top: 12px;
+  position: relative;
+  display: block;
+  width: 100%;
 }
 
 .app-filter__field {
-  flex: 1;
-  min-width: 0;
-  padding-top: 16px;
-  padding-bottom: 12px;
+  position: relative;
+  width: 100%;
+  max-width: none;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
 }
 
-.app-filter__field .mdl-textfield__label::after {
-  bottom: 12px;
+.app-filter__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.app-filter__input {
+  box-sizing: border-box;
+  height: 44px;
+  padding: 10px 16px 10px 44px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 22px;
+  background: #ffffff;
+}
+
+.app-filter__field.is-focused .app-filter__input {
+  border-color: var(--accent-secondary);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-secondary-soft);
 }
 
 .app-header-brand {
@@ -129,7 +156,7 @@ body,
 }
 
 .connection-badge__orb--connecting {
-  background: #ff9800;
+  background: #fbc02d;
 }
 
 .connection-badge__orb--offline {
@@ -447,19 +474,12 @@ body,
   font-weight: 500;
 }
 
-.app-tree-branch {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.2s ease;
-}
-
 .app-tree-branch.is-open {
-  grid-template-rows: 1fr;
+  display: block;
 }
 
 .app-tree-branch__inner {
-  overflow: hidden;
-  min-height: 0;
+  display: block;
 }
 
 .app-perf-cell {
@@ -619,9 +639,5 @@ body,
   .app-chip-pulse,
   .connection-badge__orb--pulse {
     animation: none !important;
-  }
-
-  .app-tree-branch {
-    transition: none;
   }
 }

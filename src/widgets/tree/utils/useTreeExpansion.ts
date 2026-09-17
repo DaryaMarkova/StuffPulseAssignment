@@ -8,6 +8,7 @@ import {
 
 /**
  * Управляет деревом и набором раскрытых узлов.
+ * Второй уровень (divisions) открыт с первого рендера.
  * При выборе узла раскрывает путь к нему от корня.
  *
  * @param {Node[]} nodes - плоский список узлов
@@ -20,18 +21,25 @@ import {
  */
 export function useTreeExpansion(nodes: Node[], selectedId: string | null) {
   const roots = useMemo(() => buildTree(nodes), [nodes]);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [initialized, setInitialized] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
+    defaultExpandedIds(buildTree(nodes)),
+  );
 
   useEffect(() => {
 
-    if (initialized || roots.length === 0) {
+    if (roots.length === 0) {
       return;
     }
 
-    setExpandedIds(defaultExpandedIds(roots));
-    setInitialized(true);
-  }, [roots, initialized]);
+    setExpandedIds((prev) => {
+
+      if (prev.size > 0) {
+        return prev;
+      }
+
+      return defaultExpandedIds(roots);
+    });
+  }, [roots]);
 
   useEffect(() => {
 

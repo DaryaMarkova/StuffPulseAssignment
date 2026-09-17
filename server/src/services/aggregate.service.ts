@@ -2,8 +2,8 @@ import type { ChildrenMap, NodeMap, Node } from '@/types/index.js';
 
 /**
  * Пересчёт агрегатов узлов и индекс детей.
- * - headcount / budget: сумма детей
- * - performance: среднее, взвешенное по headcount (у листа — своё значение)
+ * - headcount / budget: own + сумма потомков (через агрегаты детей)
+ * - performance: среднее, взвешенное по headcount
  */
 export class AggregatorService {
   /**
@@ -43,13 +43,19 @@ export class AggregatorService {
       const updatedAt = new Date().toISOString();
 
       if (childIds.length === 0) {
-        const next: Node = { ...node, updatedAt };
+        const next: Node = {
+          ...node,
+          headcount: node.ownHeadcount,
+          budget: node.ownBudget,
+          performance: node.ownPerformance,
+          updatedAt,
+        };
         byId.set(currentId, next);
         patched.push(next);
       } else {
-        let headcount = 0;
-        let budget = 0;
-        let weightedPerformance = 0;
+        let headcount = node.ownHeadcount;
+        let budget = node.ownBudget;
+        let weightedPerformance = node.ownPerformance * node.ownHeadcount;
 
         for (const childId of childIds) {
           const child = byId.get(childId);
@@ -66,7 +72,7 @@ export class AggregatorService {
         const performance =
           headcount > 0
             ? this.clampPerformance(weightedPerformance / headcount)
-            : node.performance;
+            : node.ownPerformance;
 
         const next: Node = {
           ...node,

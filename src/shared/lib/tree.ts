@@ -87,18 +87,46 @@ export function flattenVisible(
 }
 
 /**
- * Возвращает набор раскрытых id по умолчанию (корни открыты).
+ * Максимальная глубина узлов, раскрытых по умолчанию.
+ * `1` → открыты корень и второй уровень (divisions), видны departments.
+ */
+export const DEFAULT_EXPANDED_DEPTH = 1;
+
+/**
+ * Возвращает id узлов, раскрытых по умолчанию (второй уровень виден).
  *
  * @param {TreeNode[]} roots - корни дерева
+ * @param {number} [maxDepth=DEFAULT_EXPANDED_DEPTH] - максимальная глубина для раскрытия
  * @returns {Set<string>} id раскрытых узлов
  */
-export function defaultExpandedIds(roots: TreeNode[]): Set<string> {
+export function defaultExpandedIds(
+  roots: TreeNode[],
+  maxDepth: number = DEFAULT_EXPANDED_DEPTH,
+): Set<string> {
   const expanded = new Set<string>();
 
-  for (const root of roots) {
-    expanded.add(root.id);
-  }
+  /**
+   * Добавляет в `expanded` узлы с `depth <= maxDepth`, у которых есть дети.
+   *
+   * @param {TreeNode[]} items - узлы текущего уровня
+   * @returns {void}
+   */
+  const walk = (items: TreeNode[]): void => {
+    for (const item of items) {
 
+      if (item.depth > maxDepth) {
+        continue;
+      }
+
+      if (item.children.length > 0) {
+        expanded.add(item.id);
+        walk(item.children);
+      }
+
+    }
+  };
+
+  walk(roots);
   return expanded;
 }
 
