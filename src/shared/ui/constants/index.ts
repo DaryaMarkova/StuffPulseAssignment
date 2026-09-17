@@ -1,0 +1,6 @@
+﻿export {
+  CONNECTION_BADGE_ID,
+  CONNECTION_LABELS,
+  CONNECTION_ORB_CLASS,
+  CONNECTION_TOOLTIPS,
+} from './connectionBadge';
