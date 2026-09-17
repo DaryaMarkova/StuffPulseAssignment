@@ -1,9 +1,9 @@
 ﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { NodeRow } from '@/entities/node';
-import { KeyboardKey } from '@/shared/config';
+import { KeyboardKey, TableColumnId } from '@/shared/config';
 import { buildTree, flattenVisible } from '@/shared/lib';
 import { MdlTooltip } from '@/shared/ui';
-import type { TableColumnId, TreeNode } from '@/shared/types';
+import type { TreeNode } from '@/shared/types';
 import {
   AriaSort,
   SORT_CLICK_DELAY_MS,
@@ -20,6 +20,35 @@ import type { TableProps } from '../types';
 import { useTableColumns } from '../utils/useTableColumns';
 import { sortTableRows, useTableSort } from '../utils/useTableSort';
 
+const METRIC_COLUMNS = [
+  TableColumnId.Headcount,
+  TableColumnId.Budget,
+  TableColumnId.Performance,
+] as const;
+
+/**
+ * Колонки строки с активной подсветкой патча.
+ *
+ * @param {ReadonlySet<string>} flashCells - ключи `nodeId:columnId`
+ * @param {string} nodeId - id узла
+ * @returns {ReadonlySet<TableColumnId>} набор колонок
+ */
+function getFlashColumns(
+  flashCells: ReadonlySet<string>,
+  nodeId: string,
+): ReadonlySet<TableColumnId> {
+  const columns = new Set<TableColumnId>();
+
+  for (const columnId of METRIC_COLUMNS) {
+
+    if (flashCells.has(`${nodeId}:${columnId}`)) {
+      columns.add(columnId);
+    }
+
+  }
+
+  return columns;
+}
 /**
  * Собирает видимые строки таблицы с учётом scope.
  *
@@ -67,7 +96,7 @@ export function Table({
   nodes,
   scopeIds,
   selectedId,
-  flashIds,
+  flashCells,
   onSelect,
 }: TableProps) {
   const roots = useMemo(() => buildTree(nodes), [nodes]);
@@ -380,7 +409,7 @@ export function Table({
                     key={row.id}
                     node={row}
                     depth={row.depth}
-                    highlighted={flashIds.has(row.id)}
+                    flashColumns={getFlashColumns(flashCells, row.id)}
                     selected={selectedId === row.id || focusIndex === index}
                     columnOrder={columnOrder}
                     onSelect={() => onSelect(row.id)}

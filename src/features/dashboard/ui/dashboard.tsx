@@ -21,10 +21,14 @@ export function Dashboard() {
     isFetched,
     status,
     flashIds,
+    flashCells,
   } = useDashboard();
+
   const { filterQuery, setFilterQuery, filteredNodes, filterEmpty } =
     useFilterNodes(nodes);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const spinnerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +42,6 @@ export function Dashboard() {
   }, [filteredNodes, selectedId]);
 
   useEffect(() => {
-
     if (!selectedId) {
       return;
     }
@@ -83,7 +86,9 @@ export function Dashboard() {
             className="mdl-spinner mdl-js-spinner is-active"
             aria-hidden
           />
+          
           <span>{DASHBOARD_MESSAGES.loading}</span>
+
           <MdlTooltip forId={DASHBOARD_IDS.loading}>
             {DASHBOARD_MESSAGES.loadingTooltip}
           </MdlTooltip>
@@ -135,6 +140,7 @@ export function Dashboard() {
                   nodes={filteredNodes}
                   selectedId={selectedId}
                   flashIds={flashIds}
+                  flashCells={flashCells}
                   onSelect={setSelectedId}
                 />
               }
@@ -143,7 +149,7 @@ export function Dashboard() {
                   nodes={filteredNodes}
                   scopeIds={scopeIds}
                   selectedId={selectedId}
-                  flashIds={flashIds}
+                  flashCells={flashCells}
                   onSelect={setSelectedId}
                 />
               }

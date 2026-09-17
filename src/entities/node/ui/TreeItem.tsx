@@ -20,6 +20,8 @@ export function TreeItem({
   expanded,
   selected,
   highlighted,
+  flashHeadcount,
+  flashPerformance,
   onToggle,
   onSelect,
 }: TreeItemProps) {
@@ -99,7 +101,16 @@ export function TreeItem({
 
       <MdlTooltip forId={nameId}>{node.name}</MdlTooltip>
 
-      <span id={headcountId} className="mdl-chip mdl-color--grey-300">
+      <span
+        id={headcountId}
+        className={[
+          'mdl-chip',
+          'mdl-color--grey-300',
+          flashHeadcount ? 'pulse-flash' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <span className="mdl-chip__text">{node.headcount}</span>
       </span>
       <MdlTooltip forId={headcountId}>
@@ -108,7 +119,13 @@ export function TreeItem({
 
       <span
         id={perfId}
-        className={`mdl-chip ${PERFORMANCE_CHIP_CLASS[level]}`}
+        className={[
+          'mdl-chip',
+          PERFORMANCE_CHIP_CLASS[level],
+          flashPerformance ? 'pulse-flash' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         aria-label={NODE_UI_MESSAGES.performanceAria(node.performance)}
       >
         <span className="mdl-chip__text">{node.performance}</span>

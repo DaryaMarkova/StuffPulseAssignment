@@ -7,8 +7,8 @@ export type TableProps = {
   scopeIds: ReadonlySet<string> | null;
   /** Id выбранного узла или `null`. */
   selectedId: string | null;
-  /** Id узлов с подсветкой патча. */
-  flashIds: ReadonlySet<string>;
+  /** Ключи подсветки ячеек (`nodeId:columnId`). */
+  flashCells: ReadonlySet<string>;
   /** Колбэк выбора узла. */
   onSelect: (id: string) => void;
 };

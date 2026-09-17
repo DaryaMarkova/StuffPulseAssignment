@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import {
   getAggregatedNodes,
   nodesService,
-  type Node,
   type NodesResponse,
   type PatchEvent,
 } from '@/entities/node';
@@ -16,6 +15,7 @@ import {
 } from '@/shared/config';
 
 import { eventsService } from '../api/events.service';
+import { collectFlashKeys } from './flashCells';
 
 /**
  * Применяет SSE-патч к кэшированному ответу `/api/nodes`.
@@ -38,7 +38,7 @@ function applyPatch(current: NodesResponse, patch: PatchEvent): NodesResponse {
 
 /**
  * Загружает узлы (агрегация один раз в `queryFn`), держит SSE-патчи в кэше
- * и отслеживает статус + flash ids.
+ * и отслеживает статус + подсветку узлов/ячеек.
  *
  * @returns {{
  *   nodes: Node[],
@@ -47,7 +47,8 @@ function applyPatch(current: NodesResponse, patch: PatchEvent): NodesResponse {
  *   error: Error | null,
  *   isFetched: boolean,
  *   status: ConnectionStatus,
- *   flashIds: ReadonlySet<string>
+ *   flashIds: ReadonlySet<string>,
+ *   flashCells: ReadonlySet<string>
  * }} состояние дашборда
  */
 export function useDashboard() {
@@ -66,27 +67,40 @@ export function useDashboard() {
     ConnectionStatus.Disconnected,
   );
   const [flashIds, setFlashIds] = useState<ReadonlySet<string>>(new Set());
+  const [flashCells, setFlashCells] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     eventsService.start({
       onStatus: setStatus,
       onPatch: (patch) => {
-        queryClient.setQueryData<NodesResponse>(NODES_QUERY_KEY, (current) => {
+        const current =
+          queryClient.getQueryData<NodesResponse>(NODES_QUERY_KEY);
+        const { nodeIds, cellKeys } = collectFlashKeys(current, patch);
 
-          if (!current) {
-            return current;
+        queryClient.setQueryData<NodesResponse>(NODES_QUERY_KEY, (data) => {
+
+          if (!data) {
+            return data;
           }
 
-          return applyPatch(current, patch);
+          return applyPatch(data, patch);
         });
-
-        const ids = patch.nodes.map((node: Node) => node.id);
 
         setFlashIds((prev) => {
           const next = new Set(prev);
 
-          for (const id of ids) {
+          for (const id of nodeIds) {
             next.add(id);
+          }
+
+          return next;
+        });
+
+        setFlashCells((prev) => {
+          const next = new Set(prev);
+
+          for (const key of cellKeys) {
+            next.add(key);
           }
 
           return next;
@@ -96,8 +110,18 @@ export function useDashboard() {
           setFlashIds((prev) => {
             const next = new Set(prev);
 
-            for (const id of ids) {
+            for (const id of nodeIds) {
               next.delete(id);
+            }
+
+            return next;
+          });
+
+          setFlashCells((prev) => {
+            const next = new Set(prev);
+
+            for (const key of cellKeys) {
+              next.delete(key);
             }
 
             return next;
@@ -119,5 +143,6 @@ export function useDashboard() {
     isFetched: query.isFetched,
     status,
     flashIds,
+    flashCells,
   };
 }
