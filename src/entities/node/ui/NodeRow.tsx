@@ -38,7 +38,7 @@ function getFormattedBudget(value: number): string {
 export function NodeRow({
   node,
   depth,
-  highlighted,
+  flashColumns,
   selected,
   columnOrder,
   onSelect,
@@ -58,10 +58,21 @@ export function NodeRow({
   ].join(' ');
   const className = [
     selected ? 'is-selected mdl-color--yellow-50' : '',
-    highlighted ? 'pulse-flash' : '',
   ]
     .filter(Boolean)
     .join(' ');
+
+  /**
+   * Класс ячейки с опциональной подсветкой метрики.
+   *
+   * @param {TableColumnId} columnId - id колонки
+   * @param {string} [baseClass] - базовые классы
+   * @returns {string | undefined} className
+   */
+  const cellClass = (columnId: TableColumnId, baseClass = '') =>
+    [baseClass, flashColumns.has(columnId) ? 'pulse-flash' : '']
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   /**
    * Рендерит ячейку по id колонки.
@@ -93,7 +104,7 @@ export function NodeRow({
         );
       case TableColumnId.Headcount:
         return (
-          <td key={columnId}>
+          <td key={columnId} className={cellClass(columnId)}>
             <span id={headcountId} className="mdl-chip mdl-color--grey-300">
               <span className="mdl-chip__text">{node.headcount}</span>
             </span>
@@ -104,7 +115,7 @@ export function NodeRow({
         );
       case TableColumnId.Budget:
         return (
-          <td key={columnId}>
+          <td key={columnId} className={cellClass(columnId)}>
             <span id={budgetId}>{budgetLabel}</span>
             <MdlTooltip forId={budgetId}>
               {NODE_UI_MESSAGES.totalBudget(budgetLabel)}
@@ -113,7 +124,7 @@ export function NodeRow({
         );
       case TableColumnId.Performance:
         return (
-          <td key={columnId}>
+          <td key={columnId} className={cellClass(columnId)}>
             <div id={perfId} className="app-perf-cell">
               <span
                 className={`mdl-chip ${PERFORMANCE_CHIP_CLASS[perfLevel]}`}

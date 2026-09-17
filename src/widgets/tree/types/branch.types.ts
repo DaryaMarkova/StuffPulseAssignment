@@ -9,6 +9,8 @@ export type BranchProps = {
   selectedId: string | null;
   /** Id узлов с подсветкой патча. */
   flashIds: ReadonlySet<string>;
+  /** Ключи подсветки метрик (`nodeId:columnId`). */
+  flashCells: ReadonlySet<string>;
   /** Переключает раскрытие узла. */
   onToggle: (id: string) => void;
   /** Выбирает узел. */

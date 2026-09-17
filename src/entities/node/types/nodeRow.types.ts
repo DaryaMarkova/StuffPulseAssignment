@@ -6,8 +6,8 @@ export type NodeRowProps = {
   node: Node;
   /** Глубина в дереве (0 = корень). */
   depth: number;
-  /** Подсвечена ли строка после патча. */
-  highlighted: boolean;
+  /** Колонки с подсветкой изменившихся метрик. */
+  flashColumns: ReadonlySet<TableColumnId>;
   /** Выбрана ли строка. */
   selected: boolean;
   /** Порядок колонок таблицы. */

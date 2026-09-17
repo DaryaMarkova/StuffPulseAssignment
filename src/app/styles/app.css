@@ -474,12 +474,20 @@ body,
   font-weight: 500;
 }
 
+/* Height expand/collapse via grid 0fr → 1fr (animates effective height). */
+.app-tree-branch {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
 .app-tree-branch.is-open {
-  display: block;
+  grid-template-rows: 1fr;
 }
 
 .app-tree-branch__inner {
-  display: block;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .app-perf-cell {
@@ -639,5 +647,9 @@ body,
   .app-chip-pulse,
   .connection-badge__orb--pulse {
     animation: none !important;
+  }
+
+  .app-tree-branch {
+    transition: none;
   }
 }
