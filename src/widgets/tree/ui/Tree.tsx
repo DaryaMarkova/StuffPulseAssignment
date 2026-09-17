@@ -1,5 +1,6 @@
 ﻿import { useEffect } from 'react';
 import { TreeItem } from '@/entities/node';
+import { TableColumnId } from '@/shared/config';
 import { MdlTooltip } from '@/shared/ui';
 import { TREE_MESSAGES, TREE_PANEL_ID } from '../constants';
 import type { BranchProps, TreeProps } from '../types';
@@ -16,16 +17,19 @@ function Branch({
   expandedIds,
   selectedId,
   flashIds,
+  flashCells,
   onToggle,
   onSelect,
   open,
 }: BranchProps) {
-  if (!open) {
-    return null;
-  }
+  const className = open ? 'app-tree-branch is-open' : 'app-tree-branch';
 
   return (
-    <div className="app-tree-branch is-open">
+    <div
+      className={className}
+      aria-hidden={!open}
+      inert={!open ? true : undefined}
+    >
       <div className="app-tree-branch__inner">
         {nodes.map((node) => {
           const hasChildren = node.children.length > 0;
@@ -40,6 +44,12 @@ function Branch({
                 expanded={expanded}
                 selected={selectedId === node.id}
                 highlighted={flashIds.has(node.id)}
+                flashHeadcount={flashCells.has(
+                  `${node.id}:${TableColumnId.Headcount}`,
+                )}
+                flashPerformance={flashCells.has(
+                  `${node.id}:${TableColumnId.Performance}`,
+                )}
                 onToggle={() => onToggle(node.id)}
                 onSelect={() => onSelect(node.id)}
               />
@@ -49,6 +59,7 @@ function Branch({
                   expandedIds={expandedIds}
                   selectedId={selectedId}
                   flashIds={flashIds}
+                  flashCells={flashCells}
                   onToggle={onToggle}
                   onSelect={onSelect}
                   open={expanded}
@@ -68,7 +79,13 @@ function Branch({
  * @param {TreeProps} props - узлы, выбор, подсветка и колбэк
  * @returns {JSX.Element} карточка дерева
  */
-export function Tree({ nodes, selectedId, flashIds, onSelect }: TreeProps) {
+export function Tree({
+  nodes,
+  selectedId,
+  flashIds,
+  flashCells,
+  onSelect,
+}: TreeProps) {
   const { roots, expandedIds, toggle } = useTreeExpansion(nodes, selectedId);
 
   useEffect(() => {
@@ -100,6 +117,7 @@ export function Tree({ nodes, selectedId, flashIds, onSelect }: TreeProps) {
             expandedIds={expandedIds}
             selectedId={selectedId}
             flashIds={flashIds}
+            flashCells={flashCells}
             onToggle={toggle}
             onSelect={onSelect}
             open

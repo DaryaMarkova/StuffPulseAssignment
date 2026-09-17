@@ -13,6 +13,10 @@ export type TreeItemProps = {
   selected: boolean;
   /** Подсвечен ли узел после патча. */
   highlighted: boolean;
+  /** Подсветка headcount после патча. */
+  flashHeadcount: boolean;
+  /** Подсветка performance после патча. */
+  flashPerformance: boolean;
   /** Переключает раскрытие. */
   onToggle: () => void;
   /** Выбирает узел. */
