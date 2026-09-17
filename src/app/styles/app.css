@@ -25,10 +25,60 @@ body,
   overflow: hidden;
 }
 
+/* Keep header in flex flow so toolbar (filter) is not covered. */
+.app-shell > .mdl-layout__header {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
 .app-shell__content {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell__toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 20px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.app-shell__filter-empty {
+  margin: 24px 16px;
+}
+
+.app-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(360px, 100%);
+}
+
+.app-filter__icon {
+  flex-shrink: 0;
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 22px;
+  line-height: 1;
+  margin-top: 12px;
+}
+
+.app-filter__field {
+  flex: 1;
+  min-width: 0;
+  padding-top: 16px;
+  padding-bottom: 12px;
+}
+
+.app-filter__field .mdl-textfield__label::after {
+  bottom: 12px;
 }
 
 .app-header-brand {
@@ -36,6 +86,10 @@ body,
   flex-direction: column;
   min-width: 0;
   line-height: 1.2;
+}
+
+.app-header__icon {
+  margin-right: 16px;
 }
 
 .app-header-brand__eyebrow {
@@ -114,9 +168,7 @@ body,
 
 .app-data-table thead th {
   overflow: visible;
-  cursor: grab;
   user-select: none;
-  touch-action: none;
 }
 
 .app-data-table thead th.is-dragging {
@@ -131,13 +183,103 @@ body,
   cursor: col-resize;
 }
 
+.app-data-table thead th.is-sorted {
+  color: var(--accent-secondary);
+}
+
+.app-data-table__header {
+  padding-left: 4px !important;
+  padding-right: 14px !important;
+}
+
+.app-data-table__col--name,
+.app-data-table__header--name {
+  width: var(--col-name-width, 220px);
+}
+
+.app-data-table__col--level,
+.app-data-table__header--level {
+  width: var(--col-level-width, 96px);
+}
+
+.app-data-table__col--headcount,
+.app-data-table__header--headcount {
+  width: var(--col-headcount-width, 160px);
+}
+
+.app-data-table__col--budget,
+.app-data-table__header--budget {
+  width: var(--col-budget-width, 160px);
+}
+
+.app-data-table__col--performance,
+.app-data-table__header--performance {
+  width: var(--col-performance-width, 180px);
+}
+
+.app-data-table__name-cell {
+  font-weight: 500;
+}
+
+.app-data-table__drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  margin-right: 2px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.38);
+  vertical-align: middle;
+  cursor: grab;
+  touch-action: none;
+}
+
+.app-data-table__drag .material-icons {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.app-data-table__drag:active {
+  cursor: grabbing;
+}
+
 .app-data-table__header-label {
-  display: inline-block;
-  max-width: calc(100% - 14px);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 36px);
+  padding: 4px 2px;
+  border: none;
+  margin: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.app-data-table__header-text {
   overflow: hidden;
   text-overflow: ellipsis;
-  vertical-align: middle;
-  touch-action: none;
+  white-space: nowrap;
+}
+
+.app-data-table__sort-mark {
+  flex-shrink: 0;
+  min-width: 1em;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.app-data-table__sort-mark.is-active {
+  color: var(--accent-secondary);
+  font-size: 13px;
 }
 
 .app-data-table__resize {
@@ -301,7 +443,9 @@ body,
 
 /* Split view */
 .app-split {
+  --split-left-width: 320px;
   display: flex;
+  flex: 1;
   flex-direction: row;
   height: 100%;
   min-height: 0;
@@ -317,6 +461,7 @@ body,
 
 .app-split__left {
   flex-shrink: 0;
+  width: var(--split-left-width, 320px);
   min-width: 0;
   min-height: 0;
   height: 100%;

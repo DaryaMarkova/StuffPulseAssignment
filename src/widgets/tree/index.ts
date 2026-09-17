@@ -1,1 +1,1 @@
-export { Tree } from './ui/Tree';
+export { Tree } from './ui/tree';

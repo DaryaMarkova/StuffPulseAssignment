@@ -13,6 +13,7 @@ declare global {
  * @returns {void}
  */
 export function upgradeMdlElement(element: Element | null): void {
+
   if (!element || !window.componentHandler) {
     return;
   }

@@ -1,12 +1,11 @@
-import { getPerformanceLevel } from '@/shared/lib';
+import {
+  KeyboardKey,
+  PERFORMANCE_CHIP_CLASS,
+} from '@/shared/config';
+import { getDepthClass, getPerformanceLevel } from '@/shared/lib';
 import { MdlTooltip } from '@/shared/ui';
+import { NODE_UI_MESSAGES } from '../constants';
 import type { TreeItemProps } from '../types';
-
-const PERF_CHIP: Record<'low' | 'mid' | 'high', string> = {
-  low: 'mdl-color--red-100 mdl-color-text--red-900',
-  mid: 'mdl-color--amber-100 mdl-color-text--amber-900',
-  high: 'mdl-color--deep-orange-100 mdl-color-text--deep-orange-900',
-};
 
 /**
  * Элемент строки орг-дерева.
@@ -30,9 +29,13 @@ export function TreeItem({
   const nameId = `tree-name-${node.id}`;
   const headcountId = `tree-hc-${node.id}`;
   const perfId = `tree-perf-${node.id}`;
-  const toggleLabel = expanded ? 'Collapse' : 'Expand';
+  const toggleLabel = expanded
+    ? NODE_UI_MESSAGES.collapse
+    : NODE_UI_MESSAGES.expand;
   const className = [
-    'mdl-list__item app-tree-item',
+    'mdl-list__item',
+    'app-tree-item',
+    getDepthClass('app-tree-item', depth),
     selected ? 'is-selected mdl-color--deep-orange-50' : '',
     highlighted ? 'pulse-flash' : '',
   ]
@@ -49,13 +52,17 @@ export function TreeItem({
       aria-level={depth + 1}
       data-node-id={node.id}
       tabIndex={-1}
-      style={{ paddingLeft: `${8 + Math.min(depth, 6) * 16}px` }}
       onClick={onSelect}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+
+        if (
+          event.key === KeyboardKey.Enter ||
+          event.key === KeyboardKey.Space
+        ) {
           event.preventDefault();
           onSelect();
         }
+
       }}
     >
       {hasChildren ? (
@@ -72,7 +79,9 @@ export function TreeItem({
             }}
           >
             <i className="material-icons" aria-hidden>
-              {expanded ? 'expand_more' : 'chevron_right'}
+              {expanded
+                ? NODE_UI_MESSAGES.expandIcon
+                : NODE_UI_MESSAGES.collapseIcon}
             </i>
           </button>
           <MdlTooltip forId={toggleId}>{toggleLabel}</MdlTooltip>
@@ -87,28 +96,31 @@ export function TreeItem({
       >
         {node.name}
       </span>
+
       <MdlTooltip forId={nameId}>{node.name}</MdlTooltip>
 
       <span id={headcountId} className="mdl-chip mdl-color--grey-300">
         <span className="mdl-chip__text">{node.headcount}</span>
       </span>
       <MdlTooltip forId={headcountId}>
-        Headcount: {node.headcount}
+        {NODE_UI_MESSAGES.headcount(node.headcount)}
       </MdlTooltip>
 
       <span
         id={perfId}
-        className={`mdl-chip ${PERF_CHIP[level]}`}
-        aria-label={`Performance ${node.performance}`}
+        className={`mdl-chip ${PERFORMANCE_CHIP_CLASS[level]}`}
+        aria-label={NODE_UI_MESSAGES.performanceAria(node.performance)}
       >
         <span className="mdl-chip__text">{node.performance}</span>
       </span>
       <MdlTooltip forId={perfId}>
-        Performance: {node.performance}
+        {NODE_UI_MESSAGES.performance(node.performance)}
       </MdlTooltip>
 
       <MdlTooltip forId={itemId}>
-        {selected ? `Selected: ${node.name}` : `Select ${node.name}`}
+        {selected
+          ? NODE_UI_MESSAGES.selected(node.name)
+          : NODE_UI_MESSAGES.select(node.name)}
       </MdlTooltip>
     </div>
   );

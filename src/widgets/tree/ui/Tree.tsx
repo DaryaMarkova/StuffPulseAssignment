@@ -1,9 +1,9 @@
+﻿import { useEffect } from 'react';
 import { TreeItem } from '@/entities/node';
 import { MdlTooltip } from '@/shared/ui';
-import { useTreeExpansion } from '../model/useTreeExpansion';
+import { TREE_MESSAGES, TREE_PANEL_ID } from '../constants';
 import type { BranchProps, TreeProps } from '../types';
-
-const TREE_PANEL_ID = 'org-tree-panel';
+import { useTreeExpansion } from '../utils/useTreeExpansion';
 
 /**
  * Рекурсивная ветка дерева.
@@ -65,16 +65,26 @@ function Branch({
  * @returns {JSX.Element} карточка дерева
  */
 export function Tree({ nodes, selectedId, flashIds, onSelect }: TreeProps) {
-  const { roots, expandedIds, toggle } = useTreeExpansion(nodes);
+  const { roots, expandedIds, toggle } = useTreeExpansion(nodes, selectedId);
+
+  useEffect(() => {
+
+    if (!selectedId) {
+      return;
+    }
+
+    const element = document.getElementById(`tree-item-${selectedId}`);
+    element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [selectedId, expandedIds]);
 
   return (
     <section
       id={TREE_PANEL_ID}
       className="mdl-card mdl-shadow--2dp app-card"
-      aria-label="Organization tree"
+      aria-label={TREE_MESSAGES.ariaLabel}
     >
       <MdlTooltip forId={TREE_PANEL_ID}>
-        Organization tree — click a node to filter the table
+        {TREE_MESSAGES.panelTooltip}
       </MdlTooltip>
       <div
         className="mdl-card__supporting-text mdl-color--white app-card__body app-card__body--flush"

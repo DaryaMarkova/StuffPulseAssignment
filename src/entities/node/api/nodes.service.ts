@@ -1,7 +1,7 @@
+import { fetchJson } from '@/shared/api';
+import { API_BASE, API_ERROR_MESSAGES } from '@/shared/config';
 import { nodesResponseSchema } from '../model/node.schema';
 import type { NodesResponse } from '../types';
-import { API_BASE } from '@/shared/config';
-import { fetchJson } from '@/shared/api';
 
 /**
  * REST-клиент для `/api/nodes`.
@@ -17,7 +17,9 @@ export class NodesService {
     const parsed = nodesResponseSchema.safeParse(data);
 
     if (!parsed.success) {
-      throw new Error(`Invalid nodes response: ${parsed.error.message}`);
+      throw new Error(
+        API_ERROR_MESSAGES.invalidNodesResponse(parsed.error.message),
+      );
     }
 
     return parsed.data;

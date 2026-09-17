@@ -1,17 +1,20 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  getAggregatedNodes,
   nodesService,
   type Node,
   type NodesResponse,
   type PatchEvent,
 } from '@/entities/node';
+
 import {
   CELL_FADE_OUT_MS,
+  ConnectionStatus,
   NODES_QUERY_KEY,
   NODES_STALE_TIME_MS,
 } from '@/shared/config';
-import type { ConnectionStatus } from '@/shared/types';
+
 import { eventsService } from '../api/events.service';
 
 /**
@@ -52,7 +55,9 @@ export function useDashboard() {
     staleTime: NODES_STALE_TIME_MS,
   });
 
-  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [status, setStatus] = useState<ConnectionStatus>(
+    ConnectionStatus.Disconnected,
+  );
   const [flashIds, setFlashIds] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
@@ -60,6 +65,7 @@ export function useDashboard() {
       onStatus: setStatus,
       onPatch: (patch) => {
         queryClient.setQueryData<NodesResponse>(NODES_QUERY_KEY, (current) => {
+
           if (!current) {
             return current;
           }
@@ -68,6 +74,7 @@ export function useDashboard() {
         });
 
         const ids = patch.nodes.map((node: Node) => node.id);
+        
         setFlashIds((prev) => {
           const next = new Set(prev);
           for (const id of ids) {
@@ -79,9 +86,11 @@ export function useDashboard() {
         window.setTimeout(() => {
           setFlashIds((prev) => {
             const next = new Set(prev);
+            
             for (const id of ids) {
               next.delete(id);
             }
+
             return next;
           });
         }, CELL_FADE_OUT_MS);
@@ -93,8 +102,14 @@ export function useDashboard() {
     };
   }, [queryClient]);
 
+  const loadedNodes = query.data?.nodes;
+  const nodes = useMemo(
+    () => (loadedNodes ? getAggregatedNodes(loadedNodes) : []),
+    [loadedNodes],
+  );
+
   return {
-    nodes: query.data?.nodes ?? [],
+    nodes,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

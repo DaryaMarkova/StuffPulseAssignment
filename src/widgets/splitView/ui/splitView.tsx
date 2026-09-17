@@ -1,17 +1,18 @@
 import {
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { KeyboardKey } from '@/shared/config';
 import { MdlTooltip } from '@/shared/ui';
+import {
+  SPLIT_DIVIDER_ID,
+  SPLIT_LAYOUT,
+  SPLIT_MESSAGES,
+} from '../constants';
 import type { SplitViewProps } from '../types';
-
-const SPLIT_DIVIDER_ID = 'app-split-divider';
-
-const MIN_LEFT = 220;
-const MAX_LEFT = 560;
-const DEFAULT_LEFT = 320;
 
 /**
  * Разделяемый layout с перетаскиваемым разделителем.
@@ -21,9 +22,22 @@ const DEFAULT_LEFT = 320;
  */
 export function SplitView({ left, right }: SplitViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT);
+  const [leftWidth, setLeftWidth] = useState<number>(SPLIT_LAYOUT.defaultLeft);
   const [dragging, setDragging] = useState(false);
-  const dragRef = useRef({ startX: 0, startWidth: DEFAULT_LEFT });
+  const dragRef = useRef<{ startX: number; startWidth: number }>({
+    startX: 0,
+    startWidth: SPLIT_LAYOUT.defaultLeft,
+  });
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    container.style.setProperty('--split-left-width', `${leftWidth}px`);
+  }, [leftWidth]);
 
   /**
    * Ограничивает ширину левой панели допустимым диапазоном.
@@ -33,8 +47,11 @@ export function SplitView({ left, right }: SplitViewProps) {
    * @returns {number} ширина в допустимых границах
    */
   const clampWidth = useCallback((width: number, containerWidth: number) => {
-    const max = Math.min(MAX_LEFT, Math.max(MIN_LEFT, containerWidth - 280));
-    return Math.min(max, Math.max(MIN_LEFT, width));
+    const max = Math.min(
+      SPLIT_LAYOUT.maxLeft,
+      Math.max(SPLIT_LAYOUT.minLeft, containerWidth - SPLIT_LAYOUT.rightReserve),
+    );
+    return Math.min(max, Math.max(SPLIT_LAYOUT.minLeft, width));
   }, []);
 
   /**
@@ -63,6 +80,7 @@ export function SplitView({ left, right }: SplitViewProps) {
      */
     const onPointerMove = (moveEvent: PointerEvent) => {
       const container = containerRef.current;
+
       if (!container) {
         return;
       }
@@ -102,9 +120,7 @@ export function SplitView({ left, right }: SplitViewProps) {
       ref={containerRef}
       className={dragging ? 'app-split is-dragging' : 'app-split'}
     >
-      <aside className="app-split__left" style={{ width: leftWidth }}>
-        {left}
-      </aside>
+      <aside className="app-split__left">{left}</aside>
 
       <div
         id={SPLIT_DIVIDER_ID}
@@ -113,34 +129,44 @@ export function SplitView({ left, right }: SplitViewProps) {
         }
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize panels"
+        aria-label={SPLIT_MESSAGES.resizeAriaLabel}
         aria-valuenow={Math.round(leftWidth)}
-        aria-valuemin={MIN_LEFT}
-        aria-valuemax={MAX_LEFT}
+        aria-valuemin={SPLIT_LAYOUT.minLeft}
+        aria-valuemax={SPLIT_LAYOUT.maxLeft}
         tabIndex={0}
         onPointerDown={onPointerDown}
         onKeyDown={(event) => {
           const container = containerRef.current;
+
           if (!container) {
             return;
           }
 
-          if (event.key === 'ArrowLeft') {
+          if (event.key === KeyboardKey.ArrowLeft) {
             event.preventDefault();
             setLeftWidth((prev) =>
-              clampWidth(prev - 16, container.clientWidth),
+              clampWidth(
+                prev - SPLIT_LAYOUT.keyboardStep,
+                container.clientWidth,
+              ),
             );
           }
 
-          if (event.key === 'ArrowRight') {
+          if (event.key === KeyboardKey.ArrowRight) {
             event.preventDefault();
             setLeftWidth((prev) =>
-              clampWidth(prev + 16, container.clientWidth),
+              clampWidth(
+                prev + SPLIT_LAYOUT.keyboardStep,
+                container.clientWidth,
+              ),
             );
           }
+
         }}
       />
-      <MdlTooltip forId={SPLIT_DIVIDER_ID}>Drag to resize panels</MdlTooltip>
+      <MdlTooltip forId={SPLIT_DIVIDER_ID}>
+        {SPLIT_MESSAGES.resizeTooltip}
+      </MdlTooltip>
 
       <main className="app-split__right">{right}</main>
     </div>

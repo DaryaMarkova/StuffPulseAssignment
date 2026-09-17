@@ -1,3 +1,3 @@
-export { ConnectionBadge } from './ConnectionBadge';
-export { MdlTooltip } from './MdlTooltip';
-export { WithTooltip } from './WithTooltip';
+﻿export { ConnectionBadge } from './connectionBadge';
+export { MdlTooltip } from './mdlTooltip';
+export { WithTooltip } from './withTooltip';

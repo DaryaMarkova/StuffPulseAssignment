@@ -1,4 +1,4 @@
-import {
+﻿import {
   useCallback,
   useMemo,
   useRef,
@@ -6,16 +6,9 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { TableColumnId } from '@/shared/types';
-import type { TableColumn } from '../types';
-import { TABLE_COLUMNS } from './table-columns';
-
-type ColumnWidths = Record<TableColumnId, number>;
-
-type ResizeDrag = {
-  columnId: TableColumnId;
-  startX: number;
-  startWidth: number;
-};
+import { COLUMN_REORDER_DRAG_THRESHOLD_PX } from '../constants';
+import { TABLE_COLUMNS } from '../model/tableColumns';
+import type { ColumnWidths, ResizeDrag, TableColumn } from '../types';
 
 /**
  * Создаёт карту ширин по умолчанию.
@@ -38,9 +31,11 @@ export function useTableColumns() {
   const [order, setOrder] = useState<TableColumnId[]>(() =>
     TABLE_COLUMNS.map((column) => column.id),
   );
+
   const [widths, setWidths] = useState<ColumnWidths>(() =>
     createDefaultWidths(TABLE_COLUMNS),
   );
+  
   const [resizingId, setResizingId] = useState<TableColumnId | null>(null);
   const [draggingId, setDraggingId] = useState<TableColumnId | null>(null);
   const [dropTargetId, setDropTargetId] = useState<TableColumnId | null>(null);
@@ -91,6 +86,7 @@ export function useTableColumns() {
        */
       const onPointerMove = (moveEvent: PointerEvent) => {
         const drag = resizeRef.current;
+
         if (!drag) {
           return;
         }
@@ -102,6 +98,7 @@ export function useTableColumns() {
         );
 
         setWidths((prev) => {
+
           if (prev[drag.columnId] === next) {
             return prev;
           }
@@ -146,6 +143,7 @@ export function useTableColumns() {
    * @returns {void}
    */
   const moveColumn = useCallback((fromId: TableColumnId, toId: TableColumnId) => {
+
     if (fromId === toId) {
       return;
     }
@@ -164,7 +162,7 @@ export function useTableColumns() {
   }, []);
 
   /**
-   * Начинает pointer-перестановку колонки (без HTML5 drag).
+   * Начинает перестановку колонки с отдельной drag-ручки.
    *
    * @param {TableColumnId} columnId - id колонки
    * @param {ReactPointerEvent<HTMLElement>} event - pointer-событие
@@ -172,13 +170,19 @@ export function useTableColumns() {
    */
   const startReorder = useCallback(
     (columnId: TableColumnId, event: ReactPointerEvent<HTMLElement>) => {
+
       if (resizingId) {
         return;
       }
 
       event.preventDefault();
+      event.stopPropagation();
+
       const target = event.currentTarget;
       const pointerId = event.pointerId;
+      const startX = event.clientX;
+      const startY = event.clientY;
+      let moved = false;
       dropTargetRef.current = null;
       setDraggingId(columnId);
       setDropTargetId(null);
@@ -191,6 +195,21 @@ export function useTableColumns() {
        * @returns {void}
        */
       const onPointerMove = (moveEvent: PointerEvent) => {
+
+        if (
+          !moved &&
+          (Math.abs(moveEvent.clientX - startX) >
+            COLUMN_REORDER_DRAG_THRESHOLD_PX ||
+            Math.abs(moveEvent.clientY - startY) >
+              COLUMN_REORDER_DRAG_THRESHOLD_PX)
+        ) {
+          moved = true;
+        }
+
+        if (!moved) {
+          return;
+        }
+
         const el = document.elementFromPoint(
           moveEvent.clientX,
           moveEvent.clientY,
@@ -215,7 +234,8 @@ export function useTableColumns() {
        */
       const onPointerUp = () => {
         const currentTarget = dropTargetRef.current;
-        if (currentTarget) {
+
+        if (moved && currentTarget) {
           moveColumn(columnId, currentTarget);
         }
 

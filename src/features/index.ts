@@ -1,1 +1,1 @@
-export { Dashboard, useDashboard } from './dashboard';
+export { Dashboard, useDashboard, useFilterNodes } from './dashboard';

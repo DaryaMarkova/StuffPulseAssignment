@@ -1,4 +1,4 @@
-export { Tree } from './tree';
+﻿export { Tree } from './tree';
 export { Table } from './table';
-export { SplitView } from './split-view';
-export { AppHeader } from './app-header';
+export { SplitView } from './splitView';
+export { AppHeader } from './appHeader';

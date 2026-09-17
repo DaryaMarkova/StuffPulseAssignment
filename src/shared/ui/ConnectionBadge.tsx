@@ -1,25 +1,13 @@
-import { MdlTooltip } from '@/shared/ui';
+﻿import { ConnectionStatus } from '@/shared/config';
 import type { ConnectionBadgeProps } from '@/shared/types';
-
-const LABELS: Record<ConnectionBadgeProps['status'], string> = {
-  connecting: 'Connecting',
-  connected: 'Live',
-  disconnected: 'Offline',
-};
-
-const TOOLTIPS: Record<ConnectionBadgeProps['status'], string> = {
-  connecting: 'Connecting to realtime updates…',
-  connected: 'Realtime updates are live',
-  disconnected: 'Realtime updates are offline',
-};
-
-const CONTACT_COLOR: Record<ConnectionBadgeProps['status'], string> = {
-  connected: 'mdl-color--amber-700 mdl-color-text--white',
-  connecting: 'mdl-color--orange mdl-color-text--white',
-  disconnected: 'mdl-color--grey mdl-color-text--white',
-};
-
-const BADGE_ID = 'connection-badge';
+import {
+  CONNECTION_BADGE_ID,
+  CONNECTION_CONTACT_COLOR,
+  CONNECTION_CONTACT_MARK,
+  CONNECTION_LABELS,
+  CONNECTION_TOOLTIPS,
+} from './constants';
+import { MdlTooltip } from './mdlTooltip';
 
 /**
  * Бейдж статуса realtime-соединения.
@@ -28,24 +16,29 @@ const BADGE_ID = 'connection-badge';
  * @returns {JSX.Element} MDL-chip со статусом
  */
 export function ConnectionBadge({ status }: ConnectionBadgeProps) {
+  const pulseClass =
+    status === ConnectionStatus.Connecting ? ' app-chip-pulse' : '';
+
   return (
     <>
       <span
-        id={BADGE_ID}
+        id={CONNECTION_BADGE_ID}
         className="mdl-chip mdl-chip--contact mdl-color--white"
-        aria-label={TOOLTIPS[status]}
+        aria-label={CONNECTION_TOOLTIPS[status]}
       >
         <span
-          className={`mdl-chip__contact ${CONTACT_COLOR[status]}${status === 'connecting' ? ' app-chip-pulse' : ''}`}
+          className={`mdl-chip__contact ${CONNECTION_CONTACT_COLOR[status]}${pulseClass}`}
           aria-hidden
         >
-          {status === 'connected' ? 'L' : status === 'connecting' ? '…' : '–'}
+          {CONNECTION_CONTACT_MARK[status]}
         </span>
         <span className="mdl-chip__text mdl-color-text--grey-800">
-          {LABELS[status]}
+          {CONNECTION_LABELS[status]}
         </span>
       </span>
-      <MdlTooltip forId={BADGE_ID}>{TOOLTIPS[status]}</MdlTooltip>
+      <MdlTooltip forId={CONNECTION_BADGE_ID}>
+        {CONNECTION_TOOLTIPS[status]}
+      </MdlTooltip>
     </>
   );
 }

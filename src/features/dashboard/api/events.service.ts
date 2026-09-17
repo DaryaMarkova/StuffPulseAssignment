@@ -1,5 +1,12 @@
+import {
+  API_BASE,
+  API_ERROR_MESSAGES,
+  ConnectionStatus,
+  SseEvent,
+  SSE_BACKOFF,
+} from '@/shared/config';
+
 import { patchEventSchema } from '@/entities/node';
-import { API_BASE, SSE_BACKOFF } from '@/shared/config';
 import type { EventsHandlers } from '../types';
 
 /**
@@ -23,6 +30,7 @@ export class EventsService {
     this.handlers = handlers;
     this.intentionalClose = false;
     this.attempt = 0;
+    
     this.open();
   }
 
@@ -35,12 +43,13 @@ export class EventsService {
     this.intentionalClose = true;
     this.clearReconnectTimer();
     this.closeSource();
-    this.handlers?.onStatus('disconnected');
+
+    this.handlers?.onStatus(ConnectionStatus.Disconnected);
     this.handlers = null;
   }
 
   /**
-   * Открывает `EventSource` и подключает обработчики `ready` / `patch` / `error`.
+   * Открывает `EventSource` и подключает обработчики ready / patch / error.
    *
    * @returns {void}
    */
@@ -52,23 +61,25 @@ export class EventsService {
       return;
     }
 
-    this.handlers.onStatus('connecting');
+    this.handlers.onStatus(ConnectionStatus.Connecting);
 
     const source = new EventSource(`${API_BASE}/events`);
     this.source = source;
 
-    source.addEventListener('ready', () => {
+    source.addEventListener(SseEvent.Ready, () => {
       this.attempt = 0;
-      this.handlers?.onStatus('connected');
+      this.handlers?.onStatus(ConnectionStatus.Connected);
     });
 
-    source.addEventListener('patch', (event: MessageEvent<string>) => {
+    source.addEventListener(SseEvent.Patch, (event: MessageEvent<string>) => {
       try {
         const raw: unknown = JSON.parse(event.data);
         const parsed = patchEventSchema.safeParse(raw);
 
         if (!parsed.success) {
-          throw new Error(`Invalid patch event: ${parsed.error.message}`);
+          throw new Error(
+            API_ERROR_MESSAGES.invalidPatchEvent(parsed.error.message),
+          );
         }
 
         this.handlers?.onPatch(parsed.data);
@@ -79,12 +90,13 @@ export class EventsService {
     });
 
     source.onerror = () => {
+
       if (this.intentionalClose) {
         return;
       }
 
       this.closeSource();
-      this.handlers?.onStatus('disconnected');
+      this.handlers?.onStatus(ConnectionStatus.Disconnected);
       this.scheduleReconnect();
     };
   }
@@ -114,6 +126,7 @@ export class EventsService {
    * @returns {void}
    */
   private closeSource(): void {
+
     if (!this.source) {
       return;
     }
@@ -128,6 +141,7 @@ export class EventsService {
    * @returns {void}
    */
   private clearReconnectTimer(): void {
+
     if (!this.reconnectTimer) {
       return;
     }

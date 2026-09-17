@@ -1,4 +1,4 @@
-import { MdlTooltip } from './MdlTooltip';
+﻿import { MdlTooltip } from './mdlTooltip';
 import type { WithTooltipProps } from '@/shared/types';
 
 /**

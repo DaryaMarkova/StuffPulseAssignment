@@ -13,6 +13,7 @@ export function MdlTooltip({ forId, children, className }: MdlTooltipProps) {
 
   useEffect(() => {
     const element = ref.current;
+
     if (!element) {
       return;
     }

@@ -1,4 +1,4 @@
-import { QueryProvider } from './providers/QueryProvider';
+﻿import { QueryProvider } from './providers/queryProvider';
 import { HomePage } from '@/pages';
 
 /**

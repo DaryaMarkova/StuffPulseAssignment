@@ -1,1 +1,1 @@
-export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
+export type { ConnectionStatus } from '@/shared/config';

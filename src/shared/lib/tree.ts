@@ -17,12 +17,14 @@ export function buildTree(nodes: Node[]): TreeNode[] {
   const roots: TreeNode[] = [];
 
   for (const node of byId.values()) {
+
     if (node.parentId === null) {
       roots.push(node);
       continue;
     }
 
     const parent = byId.get(node.parentId);
+
     if (!parent) {
       roots.push(node);
       continue;
@@ -72,9 +74,11 @@ export function flattenVisible(
   const walk = (items: TreeNode[]): void => {
     for (const item of items) {
       rows.push(item);
+
       if (item.children.length > 0 && expandedIds.has(item.id)) {
         walk(item.children);
       }
+
     }
   };
 
@@ -119,13 +123,17 @@ export function collectSubtreeIds(
    */
   const find = (items: TreeNode[]): TreeNode | null => {
     for (const item of items) {
+
       if (item.id === rootId) {
         return item;
       }
+
       const nested = find(item.children);
+
       if (nested) {
         return nested;
       }
+
     }
     return null;
   };
@@ -144,9 +152,31 @@ export function collectSubtreeIds(
   };
 
   const start = find(roots);
+
   if (start) {
     collect(start);
   }
 
   return ids;
 }
+
+/**
+ * Собирает id всех предков узла (от родителя к корню).
+ *
+ * @param {Node[]} nodes - плоский список узлов
+ * @param {string} nodeId - id целевого узла
+ * @returns {string[]} id предков
+ */
+export function collectAncestorIds(nodes: Node[], nodeId: string): string[] {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const ancestors: string[] = [];
+  let current = byId.get(nodeId);
+
+  while (current?.parentId) {
+    ancestors.push(current.parentId);
+    current = byId.get(current.parentId);
+  }
+
+  return ancestors;
+}
+

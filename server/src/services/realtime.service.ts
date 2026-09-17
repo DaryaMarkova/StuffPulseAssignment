@@ -42,6 +42,7 @@ export class RealtimeService {
    * @returns {void}
    */
   broadcastPatch(nodes: Node[]): void {
+
     if (nodes.length === 0 || this.clients.size === 0) {
       return;
     }
@@ -61,6 +62,7 @@ export class RealtimeService {
    * @returns {void}
    */
   startMutations(intervalMs = 4_000): void {
+
     if (this.mutationTimer) {
       return;
     }
@@ -75,6 +77,7 @@ export class RealtimeService {
    * @returns {void}
    */
   stopMutations(): void {
+
     if (!this.mutationTimer) {
       return;
     }
@@ -90,6 +93,7 @@ export class RealtimeService {
    */
   private mutateRandomLeaf(): void {
     const leafIds = store.getLeafIds();
+
     if (leafIds.length === 0) {
       return;
     }

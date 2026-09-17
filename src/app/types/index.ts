@@ -1,1 +1,1 @@
-export type { QueryProviderProps } from './query-provider.types';
+﻿export type { QueryProviderProps } from './queryProvider.types';

@@ -34,6 +34,7 @@ export class AggregatorService {
 
     while (currentId) {
       const node = byId.get(currentId);
+
       if (!node) {
         break;
       }
@@ -52,9 +53,11 @@ export class AggregatorService {
 
         for (const childId of childIds) {
           const child = byId.get(childId);
+
           if (!child) {
             continue;
           }
+
           headcount += child.headcount;
           budget += child.budget;
           weightedPerformance += child.performance * child.headcount;

@@ -1,1 +1,1 @@
-export type PerformanceLevel = 'low' | 'mid' | 'high';
+export type { PerformanceLevel } from '@/shared/config';

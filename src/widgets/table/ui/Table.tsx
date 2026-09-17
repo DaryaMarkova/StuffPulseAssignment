@@ -1,13 +1,24 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { NodeRow } from '@/entities/node';
+import { KeyboardKey } from '@/shared/config';
 import { buildTree, flattenVisible } from '@/shared/lib';
 import { MdlTooltip } from '@/shared/ui';
-import type { TreeNode } from '@/shared/types';
-import { useTableColumns } from '../model/useTableColumns';
+import type { TableColumnId, TreeNode } from '@/shared/types';
+import {
+  AriaSort,
+  SORT_CLICK_DELAY_MS,
+  SORT_HINT_MARK,
+  SORT_MARK,
+  SortDirection,
+  TABLE_EMPTY_ID,
+  TABLE_MESSAGES,
+  TABLE_PANEL_ID,
+  reorderColumnLabel,
+  resizeColumnLabel,
+} from '../constants';
 import type { TableProps } from '../types';
-
-const TABLE_PANEL_ID = 'analytics-table-panel';
-const TABLE_EMPTY_ID = 'analytics-table-empty';
+import { useTableColumns } from '../utils/useTableColumns';
+import { sortTableRows, useTableSort } from '../utils/useTableSort';
 
 /**
  * Собирает видимые строки таблицы с учётом scope.
@@ -60,12 +71,13 @@ export function Table({
   onSelect,
 }: TableProps) {
   const roots = useMemo(() => buildTree(nodes), [nodes]);
-  const rows = useMemo(
+  const scopedRows = useMemo(
     () => collectScopedRows(roots, scopeIds),
     [roots, scopeIds],
   );
 
   const tableRef = useRef<HTMLTableElement>(null);
+  const sortClickTimerRef = useRef<number | null>(null);
   const [focusIndex, setFocusIndex] = useState(0);
   const {
     columns,
@@ -78,7 +90,30 @@ export function Table({
     startReorder,
   } = useTableColumns();
 
+  const { sort, sortAscending, reverseSort } = useTableSort();
+
+  const rows = useMemo(
+    () => sortTableRows(scopedRows, sort),
+    [scopedRows, sort],
+  );
+
+  useLayoutEffect(() => {
+    const table = tableRef.current;
+
+    if (!table) {
+      return;
+    }
+
+    for (const column of columns) {
+      table.style.setProperty(
+        `--col-${column.id}-width`,
+        `${widths[column.id]}px`,
+      );
+    }
+  }, [columns, widths]);
+
   useEffect(() => {
+
     if (rows.length === 0) {
       setFocusIndex(0);
       return;
@@ -86,14 +121,27 @@ export function Table({
 
     if (selectedId) {
       const index = rows.findIndex((row) => row.id === selectedId);
+      
+
       if (index >= 0) {
         setFocusIndex(index);
         return;
       }
+
     }
 
     setFocusIndex((prev) => Math.min(prev, rows.length - 1));
   }, [rows, selectedId]);
+
+  useEffect(() => {
+    return () => {
+
+      if (sortClickTimerRef.current !== null) {
+        window.clearTimeout(sortClickTimerRef.current);
+      }
+
+    };
+  }, []);
 
   /**
    * Обрабатывает клавиатурную навигацию по строкам.
@@ -102,47 +150,86 @@ export function Table({
    * @returns {void}
    */
   const handleKeyDown = (event: KeyboardEvent<HTMLTableElement>) => {
+
     if (rows.length === 0) {
       return;
     }
 
     const last = rows.length - 1;
 
-    if (event.key === 'ArrowDown') {
+    if (event.key === KeyboardKey.ArrowDown) {
       event.preventDefault();
       setFocusIndex((prev) => Math.min(prev + 1, last));
       return;
     }
 
-    if (event.key === 'ArrowUp') {
+    if (event.key === KeyboardKey.ArrowUp) {
       event.preventDefault();
       setFocusIndex((prev) => Math.max(prev - 1, 0));
       return;
     }
 
-    if (event.key === 'Home') {
+    if (event.key === KeyboardKey.Home) {
       event.preventDefault();
       setFocusIndex(0);
       return;
     }
 
-    if (event.key === 'End') {
+    if (event.key === KeyboardKey.End) {
       event.preventDefault();
       setFocusIndex(last);
       return;
     }
 
-    if (event.key === 'Enter') {
+    if (event.key === KeyboardKey.Enter) {
       event.preventDefault();
       const row = rows[focusIndex];
+
       if (row) {
         onSelect(row.id);
       }
+
     }
+
+  };
+
+  /**
+   * Одиночный клик — сортировка по возрастанию (с задержкой под dblclick).
+   *
+   * @param {TableColumnId} columnId - id колонки
+   * @returns {void}
+   */
+  const handleSortClick = (columnId: TableColumnId) => {
+
+    if (sortClickTimerRef.current !== null) {
+      window.clearTimeout(sortClickTimerRef.current);
+    }
+
+    sortClickTimerRef.current = window.setTimeout(() => {
+      sortAscending(columnId);
+      sortClickTimerRef.current = null;
+    }, SORT_CLICK_DELAY_MS);
+  };
+
+  /**
+   * Двойной клик — обратная сортировка.
+   *
+   * @param {TableColumnId} columnId - id колонки
+   * @returns {void}
+   */
+  const handleSortDoubleClick = (columnId: TableColumnId) => {
+
+    if (sortClickTimerRef.current !== null) {
+      window.clearTimeout(sortClickTimerRef.current);
+      sortClickTimerRef.current = null;
+    }
+
+    reverseSort(columnId);
   };
 
   useEffect(() => {
     const row = rows[focusIndex];
+
     if (!row || !tableRef.current) {
       return;
     }
@@ -157,10 +244,10 @@ export function Table({
     <section
       id={TABLE_PANEL_ID}
       className="mdl-card mdl-shadow--2dp app-card"
-      aria-label="Analytics table"
+      aria-label={TABLE_MESSAGES.ariaLabel}
     >
       <MdlTooltip forId={TABLE_PANEL_ID}>
-        Analytics table — scoped to the selected tree node
+        {TABLE_MESSAGES.panelTooltip}
       </MdlTooltip>
       <div className="mdl-card__supporting-text app-card__body app-card__body--flush mdl-color--white">
         {rows.length === 0 ? (
@@ -169,10 +256,10 @@ export function Table({
               id={TABLE_EMPTY_ID}
               className="mdl-color-text--grey-600 app-empty"
             >
-              No nodes in scope.
+              {TABLE_MESSAGES.empty}
             </p>
             <MdlTooltip forId={TABLE_EMPTY_ID}>
-              No nodes match the current selection
+              {TABLE_MESSAGES.emptyTooltip}
             </MdlTooltip>
           </>
         ) : (
@@ -193,7 +280,7 @@ export function Table({
                 {columns.map((column) => (
                   <col
                     key={column.id}
-                    style={{ width: `${widths[column.id]}px` }}
+                    className={`app-data-table__col app-data-table__col--${column.id}`}
                   />
                 ))}
               </colgroup>
@@ -201,13 +288,17 @@ export function Table({
                 <tr>
                   {columns.map((column) => {
                     const headerId = `col-${column.id}`;
+                    const isSorted = sort?.columnId === column.id;
                     const thClass = [
+                      'app-data-table__header',
+                      `app-data-table__header--${column.id}`,
                       column.nonNumeric
                         ? 'mdl-data-table__cell--non-numeric app-data-table__name'
                         : '',
                       draggingId === column.id ? 'is-dragging' : '',
                       dropTargetId === column.id ? 'is-drop-target' : '',
                       resizingId === column.id ? 'is-resizing' : '',
+                      isSorted ? 'is-sorted' : '',
                     ]
                       .filter(Boolean)
                       .join(' ');
@@ -218,16 +309,53 @@ export function Table({
                         id={headerId}
                         data-column-id={column.id}
                         className={thClass || undefined}
-                        style={{ width: `${widths[column.id]}px` }}
+                        aria-sort={
+                          isSorted
+                            ? sort.direction === SortDirection.Asc
+                              ? AriaSort.Ascending
+                              : AriaSort.Descending
+                            : AriaSort.None
+                        }
                       >
-                        <span
-                          className="app-data-table__header-label"
+                        <button
+                          type="button"
+                          className="app-data-table__drag"
+                          aria-label={reorderColumnLabel(column.label)}
+                          tabIndex={-1}
                           onPointerDown={(event) => {
                             startReorder(column.id, event);
                           }}
                         >
-                          {column.label}
-                        </span>
+                          <i className="material-icons" aria-hidden>
+                            drag_indicator
+                          </i>
+                        </button>
+                        <button
+                          type="button"
+                          className="app-data-table__header-label"
+                          onClick={() => {
+                            handleSortClick(column.id);
+                          }}
+                          onDoubleClick={() => {
+                            handleSortDoubleClick(column.id);
+                          }}
+                        >
+                          <span className="app-data-table__header-text">
+                            {column.label}
+                          </span>
+                          <span
+                            className={
+                              isSorted
+                                ? 'app-data-table__sort-mark is-active'
+                                : 'app-data-table__sort-mark'
+                            }
+                            aria-hidden
+                          >
+                            {isSorted
+                              ? SORT_MARK[sort.direction]
+                              : SORT_HINT_MARK}
+                          </span>
+                        </button>
                         <button
                           type="button"
                           className={
@@ -235,7 +363,7 @@ export function Table({
                               ? 'app-data-table__resize is-active'
                               : 'app-data-table__resize'
                           }
-                          aria-label={`Resize ${column.label} column`}
+                          aria-label={resizeColumnLabel(column.label)}
                           tabIndex={-1}
                           onPointerDown={(event) => {
                             startResize(column.id, event);
@@ -262,7 +390,7 @@ export function Table({
             </table>
             {columns.map((column) => (
               <MdlTooltip key={column.id} forId={`col-${column.id}`}>
-                {column.tooltip}
+                {`${column.tooltip}. ${TABLE_MESSAGES.sortHint}`}
               </MdlTooltip>
             ))}
           </div>
