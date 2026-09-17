@@ -2,6 +2,7 @@
   buildTree,
   flattenVisible,
   defaultExpandedIds,
+  DEFAULT_EXPANDED_DEPTH,
   collectSubtreeIds,
   collectAncestorIds,
 } from './tree';

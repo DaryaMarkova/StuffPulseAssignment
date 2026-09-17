@@ -20,8 +20,12 @@ function Branch({
   onSelect,
   open,
 }: BranchProps) {
+  if (!open) {
+    return null;
+  }
+
   return (
-    <div className={open ? 'app-tree-branch is-open' : 'app-tree-branch'}>
+    <div className="app-tree-branch is-open">
       <div className="app-tree-branch__inner">
         {nodes.map((node) => {
           const hasChildren = node.children.length > 0;

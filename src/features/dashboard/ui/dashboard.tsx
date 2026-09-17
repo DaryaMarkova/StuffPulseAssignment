@@ -106,9 +106,9 @@ export function Dashboard() {
       {isFetched && !isError && nodes.length === 0 ? (
         <div
           id={DASHBOARD_IDS.empty}
-          className="mdl-card mdl-shadow--2dp app-alert mdl-color--light-blue-100"
+          className="mdl-card mdl-shadow--2dp app-alert mdl-color--yellow-100"
         >
-          <div className="mdl-card__supporting-text mdl-color-text--blue-900">
+          <div className="mdl-card__supporting-text mdl-color-text--grey-900">
             {DASHBOARD_MESSAGES.empty}
           </div>
           <MdlTooltip forId={DASHBOARD_IDS.empty}>
@@ -131,6 +131,7 @@ export function Dashboard() {
             <SplitView
               left={
                 <Tree
+                  key="org-tree-v2"
                   nodes={filteredNodes}
                   selectedId={selectedId}
                   flashIds={flashIds}

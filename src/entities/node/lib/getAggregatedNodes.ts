@@ -1,10 +1,4 @@
-import type { Node } from '../types';
-
-type AggregateMetrics = {
-  headcount: number;
-  budget: number;
-  performance: number;
-};
+import type { AggregateMetrics, Node } from '../types';
 
 /**
  * Ограничивает performance диапазоном 0–100 и округляет.
@@ -36,7 +30,7 @@ function buildChildrenIndex(nodes: Node[]): Map<string | null, string[]> {
 
 /**
  * Считает агрегаты снизу вверх:
- * - headcount / budget — сумма по всему поддереву (узел как подразделение + потомки);
+ * - headcount / budget — own узла + все потомки;
  * - performance — среднее, взвешенное по headcount.
  *
  * @param {Node[]} nodes - плоский список узлов после загрузки / патча
@@ -79,20 +73,9 @@ export function getAggregatedNodes(nodes: Node[]): Node[] {
 
     const childIds = children.get(id) ?? [];
 
-    if (childIds.length === 0) {
-      const leaf: AggregateMetrics = {
-        headcount: node.headcount,
-        budget: node.budget,
-        performance: node.performance,
-      };
-      aggregates.set(id, leaf);
-
-      return leaf;
-    }
-
-    let headcount = 0;
-    let budget = 0;
-    let weightedPerformance = 0;
+    let headcount = node.ownHeadcount;
+    let budget = node.ownBudget;
+    let weightedPerformance = node.ownPerformance * node.ownHeadcount;
 
     for (const childId of childIds) {
       const child = aggregateSubtree(childId);
@@ -104,7 +87,7 @@ export function getAggregatedNodes(nodes: Node[]): Node[] {
     const performance =
       headcount > 0
         ? clampPerformance(weightedPerformance / headcount)
-        : node.performance;
+        : node.ownPerformance;
 
     const next: AggregateMetrics = { headcount, budget, performance };
     aggregates.set(id, next);
@@ -117,11 +100,9 @@ export function getAggregatedNodes(nodes: Node[]): Node[] {
   }
 
   for (const node of nodes) {
-
     if (!aggregates.has(node.id)) {
       aggregateSubtree(node.id);
     }
-
   }
 
   return nodes.map((node) => {

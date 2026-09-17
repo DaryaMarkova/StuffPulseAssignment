@@ -31,6 +31,9 @@ export class Three {
       id,
       name,
       parentId,
+      ownHeadcount: 0,
+      ownBudget: 0,
+      ownPerformance: 0,
       headcount: 0,
       budget: 0,
       performance: 0,
@@ -47,6 +50,9 @@ export class Three {
   private leaf(data: SeedLeaf): Node {
     return {
       ...data,
+      ownHeadcount: data.headcount,
+      ownBudget: data.budget,
+      ownPerformance: data.performance,
       updatedAt: this.now(),
     };
   }
