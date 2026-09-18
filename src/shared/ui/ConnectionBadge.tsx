@@ -6,7 +6,7 @@ import {
   CONNECTION_ORB_CLASS,
   CONNECTION_TOOLTIPS,
 } from './constants';
-import { MdlTooltip } from './mdlTooltip';
+import { MdlTooltip } from './MdlTooltip';
 
 /**
  * Бейдж статуса realtime-соединения в стиле Skype presence.

@@ -1,0 +1,30 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: stuffpulse-server
+    env_file:
+      - .env
+    environment:
+      # Internal listen port (nginx proxies here by service name)
+      PORT: 3001
+      MUTATION_INTERVAL_MS: ${MUTATION_INTERVAL_MS:-4000}
+    ports:
+      - "${SERVER_PORT:-3001}:3001"
+    restart: unless-stopped
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-/api}
+    container_name: stuffpulse-client
+    env_file:
+      - .env
+    ports:
+      - "${CLIENT_PORT:-8080}:80"
+    depends_on:
+      - server
+    restart: unless-stopped

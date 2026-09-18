@@ -24,8 +24,13 @@ export function Dashboard() {
     flashCells,
   } = useDashboard();
 
-  const { filterQuery, setFilterQuery, filteredNodes, filterEmpty } =
-    useFilterNodes(nodes);
+  const {
+    filterQuery,
+    setFilterQuery,
+    filteredNodes,
+    filterEmpty,
+    searchMode,
+  } = useFilterNodes(nodes);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -125,7 +130,11 @@ export function Dashboard() {
       {nodes.length > 0 ? (
         <main className="mdl-layout__content app-shell__content">
           <div className="app-shell__toolbar">
-            <Filter value={filterQuery} onChange={setFilterQuery} />
+            <Filter
+              value={filterQuery}
+              onChange={setFilterQuery}
+              searchMode={searchMode}
+            />
           </div>
 
           {filterEmpty ? (

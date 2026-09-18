@@ -5,17 +5,24 @@ import { DASHBOARD_IDS, DASHBOARD_MESSAGES } from '../constants';
 import type { FilterProps } from '../types';
 
 /**
- * Поле фильтрации узлов по названию.
+ * Поле AI-поиска: NL → structured filter, иначе текстовый fallback.
  *
- * @param {FilterProps} props - значение и обработчик изменения
+ * @param {FilterProps} props - значение, режим и обработчик
  * @returns {JSX.Element} MDL text field
  */
-export function Filter({ value, onChange }: FilterProps) {
+export function Filter({ value, onChange, searchMode = 'none' }: FilterProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     upgradeMdlElement(fieldRef.current);
   }, []);
+
+  const modeLabel =
+    searchMode === 'structured'
+      ? DASHBOARD_MESSAGES.filterModeAi
+      : searchMode === 'text'
+        ? DASHBOARD_MESSAGES.filterModeText
+        : null;
 
   return (
     <div className="app-filter">
@@ -43,6 +50,11 @@ export function Filter({ value, onChange }: FilterProps) {
             onChange(event.target.value);
           }}
         />
+        {modeLabel ? (
+          <span className="app-filter__mode" aria-live="polite">
+            {modeLabel}
+          </span>
+        ) : null}
       </div>
       <MdlTooltip forId={DASHBOARD_IDS.filter}>
         {DASHBOARD_MESSAGES.filterTooltip}
