@@ -57,6 +57,18 @@ Vite проксирует `/api` → `http://localhost:3001`.
 | `npm run lint` | Oxlint |
 | `docker compose up --build` | клиент + сервер в Docker |
 
+## CI / Deploy (GitHub Actions)
+
+На push в `dev`:
+
+1. **CI** (`.github/workflows/ci.yml`) — `lint`, `test`, `build:size`
+2. **GitHub Pages** (`.github/workflows/deploy-pages.yml`) — сборка UI и публикация
+
+Сайт: https://daryamarkova.github.io/StuffPulseAssignment/
+
+> GitHub Pages отдаёт только **статический UI**. API + SSE живут локально / в Docker (`npm start` или `docker compose up`).  
+> Чтобы UI на Pages ходил в публичный API, задай в настройках репозитория variable `VITE_API_BASE` (URL API) и перезапусти workflow.
+
 ## AI в разработке
 
 > Обязательный раздел: как использовался AI при создании проекта.
