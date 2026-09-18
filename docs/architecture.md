@@ -41,7 +41,7 @@ shared/      # config, http, tree helpers, UI-примитивы
 ### 1. Первичная загрузка
 
 ```
-GET /api/nodes
+GET /api/org-tree
     → NodesController → store.getAll()
     → JSON { nodes: Node[] }
     → nodesService.getAll() + Zod (nodesResponseSchema)

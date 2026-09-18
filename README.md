@@ -10,9 +10,24 @@
 | Backend | Node.js, Express, TypeScript (`tsx`) |
 | Данные | In-memory store + seed |
 
-## Быстрый старт (одной командой)
+## Быстрый старт
 
-### Docker (рекомендуется)
+Одной командой (установка зависимостей + API + UI):
+
+```bash
+npm run setup && npm start
+```
+
+| URL | |
+| --- | --- |
+| UI | http://localhost:5173 |
+| API | http://localhost:3001 |
+
+- `npm run setup` — зависимости корня и `server/`
+- `npm start` — API + Vite вместе (concurrently)
+- Vite проксирует `/api` → `http://localhost:3001`
+
+### Docker
 
 Конфиг — `.env` в корне.
 
@@ -26,22 +41,6 @@ docker compose up --build
 | API | http://localhost:3001 |
 
 Nginx отдаёт статику с **gzip**, проксирует `/api` (включая SSE). Production-сборка UI — **≤ 200 КБ gzip**.
-
-### Локальная разработка (тоже одной командой)
-
-```bash
-npm run setup && npm start
-```
-
-- `npm run setup` — зависимости корня и `server/`
-- `npm start` — API + Vite **в одном процессе** (concurrently)
-
-| URL | |
-| --- | --- |
-| UI | http://localhost:5173 |
-| API | http://localhost:3001 |
-
-Vite проксирует `/api` → `http://localhost:3001`.
 
 ### Полезные скрипты
 
@@ -66,8 +65,14 @@ Vite проксирует `/api` → `http://localhost:3001`.
 
 Сайт: https://daryamarkova.github.io/StuffPulseAssignment/
 
-> GitHub Pages отдаёт только **статический UI**. API + SSE живут локально / в Docker (`npm start` или `docker compose up`).  
-> Чтобы UI на Pages ходил в публичный API, задай в настройках репозитория variable `VITE_API_BASE` (URL API) и перезапусти workflow.
+На Pages UI читает **статичный** `public/data/nodes.json` (`VITE_USE_STATIC_DATA=true`), без API/SSE.  
+Локально / в Docker: сначала `/api/org-tree`, при недоступности API — тот же JSON (offline fallback).
+
+Обновить снимок seed:
+
+```bash
+npm run export:seed --prefix server
+```
 
 ## AI в разработке
 
@@ -110,7 +115,7 @@ Vite проксирует `/api` → `http://localhost:3001`.
 - **Фильтр** — AI-поиск (NL → структурированный фильтр на клиенте; fallback — поиск по имени)
 - **Realtime** — SSE `/api/events`, патчи метрик в кэш React Query, подсветка изменённых ячеек
 - **Анимация дерева** — height-transition; при `prefers-reduced-motion: reduce` без анимации
-- **Состояния UI** — loading / error / empty
+- **Состояния UI** — loading / error / empty; отмена `fetch` при размонтировании (`AbortSignal`)
 
 ## Архитектура
 
@@ -148,8 +153,8 @@ server/src/
 | Метод | Путь | Описание |
 | --- | --- | --- |
 | `GET` | `/api/health` | healthcheck |
-| `GET` | `/api/nodes` | список узлов |
-| `GET` | `/api/nodes/:id` | узел по id |
+| `GET` | `/api/org-tree` | список узлов |
+| `GET` | `/api/org-tree/:id` | узел по id |
 | `GET` | `/api/events` | SSE-поток патчей |
 
 ## Документация
@@ -158,6 +163,8 @@ server/src/
 | --- | --- |
 | [docs/architecture.md](./docs/architecture.md) | слои приложения, поток данных API → UI |
 | [docs/data-model.md](./docs/data-model.md) | дерево, агрегация, контракт realtime-патча (SSE) |
+
+Offline / Pages snapshot: `public/data/nodes.json` (обновление: `npm run export:seed`).
 
 ## Структура репозитория
 

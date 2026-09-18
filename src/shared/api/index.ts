@@ -1,1 +1,1 @@
-export { HttpError, fetchJson } from './http';
+export { HttpError, fetchJson, isAbortError } from './http';

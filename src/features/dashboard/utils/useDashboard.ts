@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import {
   getAggregatedNodes,
   nodesService,
+  type NodesDataSource,
   type NodesResponse,
   type PatchEvent,
 } from '@/entities/node';
@@ -18,7 +19,7 @@ import { eventsService } from '../api/events.service';
 import { collectFlashKeys } from './flashCells';
 
 /**
- * Применяет SSE-патч к кэшированному ответу `/api/nodes`.
+ * Применяет SSE-патч к кэшированному ответу `/api/org-tree`.
  * Сервер уже присылает пересчитанные агрегаты для листа и предков —
  * полная клиентская агрегация здесь не запускается.
  *
@@ -36,8 +37,12 @@ function applyPatch(current: NodesResponse, patch: PatchEvent): NodesResponse {
   return { nodes: Array.from(byId.values()) };
 }
 
+type DashboardQueryData = NodesResponse & {
+  source: NodesDataSource;
+};
+
 /**
- * Загружает узлы (агрегация один раз в `queryFn`), держит SSE-патчи в кэше
+ * Загружает узлы (API или статичный JSON), держит SSE-патчи в кэше
  * и отслеживает статус + подсветку узлов/ячеек.
  *
  * @returns {{
@@ -47,6 +52,7 @@ function applyPatch(current: NodesResponse, patch: PatchEvent): NodesResponse {
  *   error: Error | null,
  *   isFetched: boolean,
  *   status: ConnectionStatus,
+ *   dataSource: NodesDataSource | null,
  *   flashIds: ReadonlySet<string>,
  *   flashCells: ReadonlySet<string>
  * }} состояние дашборда
@@ -55,35 +61,51 @@ export function useDashboard() {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: NODES_QUERY_KEY,
-    queryFn: async (): Promise<NodesResponse> => {
-      const data = await nodesService.getAll();
+    queryFn: async ({ signal }): Promise<DashboardQueryData> => {
+      const { data, source } = await nodesService.getAll(signal);
 
-      return { nodes: getAggregatedNodes(data.nodes) };
+      return {
+        nodes: getAggregatedNodes(data.nodes),
+        source,
+      };
     },
     staleTime: NODES_STALE_TIME_MS,
   });
 
+  const dataSource = query.data?.source ?? null;
+
   const [status, setStatus] = useState<ConnectionStatus>(
     ConnectionStatus.Disconnected,
   );
+  
   const [flashIds, setFlashIds] = useState<ReadonlySet<string>>(new Set());
   const [flashCells, setFlashCells] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
+    if (!query.isSuccess || dataSource === 'static') {
+      setStatus(ConnectionStatus.Disconnected);
+
+      return;
+    }
+
+    const flashTimers = new Set<number>();
+
     eventsService.start({
       onStatus: setStatus,
       onPatch: (patch) => {
         const current =
-          queryClient.getQueryData<NodesResponse>(NODES_QUERY_KEY);
+          queryClient.getQueryData<DashboardQueryData>(NODES_QUERY_KEY);
         const { nodeIds, cellKeys } = collectFlashKeys(current, patch);
 
-        queryClient.setQueryData<NodesResponse>(NODES_QUERY_KEY, (data) => {
-
+        queryClient.setQueryData<DashboardQueryData>(NODES_QUERY_KEY, (data) => {
           if (!data) {
             return data;
           }
 
-          return applyPatch(data, patch);
+          return {
+            ...applyPatch(data, patch),
+            source: data.source,
+          };
         });
 
         setFlashIds((prev) => {
@@ -106,7 +128,9 @@ export function useDashboard() {
           return next;
         });
 
-        window.setTimeout(() => {
+        const timerId = window.setTimeout(() => {
+          flashTimers.delete(timerId);
+
           setFlashIds((prev) => {
             const next = new Set(prev);
 
@@ -127,13 +151,20 @@ export function useDashboard() {
             return next;
           });
         }, CELL_FADE_OUT_MS);
+
+        flashTimers.add(timerId);
       },
     });
 
     return () => {
+      for (const timerId of flashTimers) {
+        window.clearTimeout(timerId);
+      }
+
+      flashTimers.clear();
       eventsService.stop();
     };
-  }, [queryClient]);
+  }, [query.isSuccess, dataSource, queryClient]);
 
   return {
     nodes: query.data?.nodes ?? [],
@@ -142,6 +173,7 @@ export function useDashboard() {
     error: query.error,
     isFetched: query.isFetched,
     status,
+    dataSource,
     flashIds,
     flashCells,
   };

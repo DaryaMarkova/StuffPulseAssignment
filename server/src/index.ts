@@ -22,7 +22,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.use('/api/nodes', nodesRouter);
+app.use('/api/org-tree', nodesRouter);
 app.use('/api/events', eventsRouter);
 
 app.listen(PORT, () => {

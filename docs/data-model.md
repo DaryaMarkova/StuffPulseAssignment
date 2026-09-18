@@ -31,7 +31,7 @@ type NodesResponse = {
 };
 ```
 
-`GET /api/nodes` → `{ "nodes": [ ... ] }`.
+`GET /api/org-tree` → `{ "nodes": [ ... ] }`.
 
 ## Дерево на клиенте
 

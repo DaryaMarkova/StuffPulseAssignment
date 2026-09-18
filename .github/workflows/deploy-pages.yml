@@ -35,8 +35,8 @@ jobs:
         env:
           # Project site under https://<user>.github.io/<repo>/
           VITE_BASE_PATH: /StuffPulseAssignment/
-          # Relative /api works only with a reverse-proxy; Pages is static-only.
-          # Optional: set repo variable/secret VITE_API_BASE to a public API URL.
+          # Pages has no API — use bundled seed JSON
+          VITE_USE_STATIC_DATA: 'true'
           VITE_API_BASE: ${{ vars.VITE_API_BASE || '/api' }}
         run: npm run build
 

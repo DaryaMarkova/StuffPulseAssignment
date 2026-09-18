@@ -3,7 +3,7 @@ import { ERROR_MESSAGES } from '@/constants/messages.js';
 import { store } from '@/store.js';
 
 /**
- * HTTP-обработчики для REST `/api/nodes`.
+ * HTTP-обработчики для REST `/api/org-tree`.
  */
 class NodesController {
   readonly router = Router();
