@@ -2,6 +2,9 @@
 
 Дашборд оргструктуры: дерево узлов, аналитическая таблица, AI-поиск, realtime-обновления метрик по SSE.
 
+<img width="1280" height="583" alt="image" src="https://github.com/user-attachments/assets/8a85989e-cba0-49dc-a499-bb36ac8c7f84" />
+
+
 ## Стек
 
 | Слой | Технологии |
